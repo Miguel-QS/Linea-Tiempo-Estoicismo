@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>El Estoicismo — Línea del tiempo interactiva</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --marble-1:#f2ecdd;
+    --marble-2:#e7dcc2;
+    --ink:#2b2013;
+    --sub:#6e5f47;
+    --gold:#a9752f;
+    --gold-deep:#7d5321;
+    --antigua:#8a5a2b;
+    --antigua-l:#c98f52;
+    --media:#4f6b52;
+    --media-l:#7fa07f;
+    --romana:#6a3b46;
+    --romana-l:#a25d6b;
+    --card:#fffdf7;
+    --shadow:rgba(60,40,10,0.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    font-family:'EB Garamond', Georgia, serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.5), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(120,90,40,0.08), transparent 45%),
+      linear-gradient(160deg, var(--marble-1), var(--marble-2));
+    overflow:hidden;
+  }
+  h1,h2,h3,.display{font-family:'Cinzel', serif;}
+
+  .column-deco{
+    position:fixed; top:0; bottom:0; width:46px;
+    background:
+      repeating-linear-gradient(90deg, rgba(120,90,40,0.10) 0 4px, transparent 4px 10px),
+      linear-gradient(180deg, rgba(120,90,40,0.05), rgba(120,90,40,0.15));
+    z-index:0; pointer-events:none;
+  }
+  .column-deco.left{left:0;}
+  .column-deco.right{right:0;}
+
+  #app{ position:relative; width:100%; height:100%; z-index:1; }
+  .screen{
+    position:absolute; inset:0;
+    overflow-y:auto; overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  #timeline-screen{ z-index:2; }
+  .top-title{ text-align:center; padding:34px 20px 6px 20px; }
+  .top-title h1{ font-size:1.7rem; margin:0 0 6px 0; color:var(--gold-deep); letter-spacing:1px; }
+  .top-title p{ margin:0; color:var(--sub); font-size:0.95rem; font-style:italic;}
+
+  .legend{
+    display:flex; justify-content:center; gap:18px; flex-wrap:wrap;
+    margin:16px auto 4px auto; font-size:0.78rem; font-family:Arial, sans-serif;
+    color:var(--sub);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px;}
+  .legend i{ width:12px;height:12px;border-radius:50%; display:inline-block;}
+
+  .rail-wrap{ overflow-x:auto; padding:36px 10px 10px 10px; }
+  .rail{ position:relative; min-width:1500px; height:230px; margin:0 60px; }
+  .axis{
+    position:absolute; left:0; right:0; top:110px; height:4px; border-radius:3px;
+    background:linear-gradient(90deg, var(--antigua), var(--media), var(--romana));
+    box-shadow:0 1px 3px var(--shadow);
+  }
+  .tick{ position:absolute; top:96px; width:2px; height:32px; background:rgba(110,95,71,0.35); border-radius:2px;}
+  .tick-label{
+    position:absolute; top:132px; transform:translateX(-50%);
+    font-size:0.72rem; color:var(--sub); font-family:Arial, sans-serif; white-space:nowrap;
+  }
+
+  .medal-btn{
+    position:absolute; top:78px; transform:translateX(-50%);
+    width:64px; height:64px; border-radius:50%;
+    border:none; cursor:pointer; padding:0; background:transparent;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 8px var(--shadow);
+    transition:transform .2s ease, box-shadow .2s ease;
+    z-index:3;
+  }
+  .medal-btn svg{ width:100%; height:100%; display:block; }
+  .medal-btn:hover, .medal-btn:focus-visible{
+    transform:translateX(-50%) translateY(-6px) scale(1.08);
+    box-shadow:0 8px 16px var(--shadow);
+  }
+  .name-tag{
+    position:absolute; width:130px; transform:translateX(-50%);
+    text-align:center; font-size:0.74rem; font-family:Arial, sans-serif;
+    font-weight:700; color:var(--ink); line-height:1.15; cursor:pointer;
+  }
+  .name-tag .yrs{ display:block; font-weight:400; color:var(--sub); font-size:0.68rem; margin-top:1px;}
+  .name-tag.above{ top:2px; }
+  .name-tag.below{ top:150px; }
+
+  .hint{ text-align:center; color:var(--sub); font-family:Arial, sans-serif; font-size:0.78rem; margin:6px 0 30px 0; }
+  .hint b{ color:var(--gold-deep); }
+  footer.credit{ text-align:center; color:var(--sub); font-family:Arial, sans-serif; font-size:0.72rem; padding:10px 16px 30px 16px; }
+
+  #detail-screen{
+    z-index:5;
+    clip-path:circle(0% at var(--ox,50%) var(--oy,50%));
+    transition:clip-path .65s cubic-bezier(.65,0,.35,1);
+    pointer-events:none;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,0.55), transparent 45%),
+      linear-gradient(160deg, var(--marble-1), var(--marble-2));
+  }
+  #detail-screen.open{ clip-path:circle(150% at var(--ox,50%) var(--oy,50%)); pointer-events:auto; }
+
+  .detail-topbar{ display:flex; align-items:center; justify-content:space-between; padding:20px 18px 4px 18px; }
+  .back-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid rgba(110,95,71,0.25);
+    color:var(--gold-deep); font-family:Arial, sans-serif; font-weight:700;
+    font-size:0.85rem; padding:9px 16px; border-radius:30px; cursor:pointer;
+    box-shadow:0 2px 6px var(--shadow);
+  }
+  .back-btn:hover{ background:#fff; }
+  .progress{ font-family:Arial, sans-serif; font-size:0.78rem; color:var(--sub); }
+
+  .detail-body{ max-width:640px; margin:0 auto; padding:10px 22px 60px 22px; text-align:center; }
+  .detail-medal{ width:150px; height:150px; margin:10px auto 14px auto; filter:drop-shadow(0 6px 10px var(--shadow)); }
+  .photo-medal{ position:relative; border-radius:50%; overflow:hidden; box-shadow:0 3px 8px var(--shadow); background:#ddd; }
+  .photo-medal img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photo-medal .ring{ position:absolute; inset:0; border-radius:50%; box-shadow:inset 0 0 0 4px rgba(255,253,247,0.85), inset 0 0 16px rgba(0,0,0,0.35); pointer-events:none; }
+  .photo-medal .num{ position:absolute; right:2px; bottom:0; font-family:'Cinzel',serif; font-weight:700; color:#fffdf7; font-size:0.7em; background:rgba(43,32,19,0.55); width:22%; height:22%; min-width:16px; min-height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .img-credit{ font-size:0.68rem; color:var(--sub); font-family:Arial, sans-serif; font-style:italic; text-align:center; margin:-6px 0 14px 0; line-height:1.35; }
+  .no-portrait-note{ font-size:0.68rem; color:var(--sub); font-family:Arial, sans-serif; font-style:italic; text-align:center; margin:-6px 0 14px 0; }
+  .era-pill{
+    display:inline-block; font-family:Arial, sans-serif; font-size:0.72rem;
+    font-weight:700; letter-spacing:0.5px; text-transform:uppercase;
+    color:#fff; padding:4px 14px; border-radius:20px; margin-bottom:10px;
+  }
+  .detail-body h2{ margin:4px 0 2px 0; font-size:1.55rem; color:var(--ink);}
+  .detail-body .years{ color:var(--sub); font-style:italic; margin-bottom:18px;}
+
+  .fade-wrap{ transition:opacity .22s ease, transform .22s ease; }
+  .fade-wrap.fading{ opacity:0; transform:translateY(8px); }
+
+  .info-block{ text-align:left; margin:0 0 16px 0;}
+  .info-block h3{ font-size:0.95rem; color:var(--gold-deep); margin:0 0 6px 0; display:flex; align-items:center; gap:8px; }
+  .info-block p{ margin:0; line-height:1.55; font-size:1.05rem;}
+  .actual-box{ background:var(--card); border-left:5px solid var(--gold); border-radius:10px; padding:14px 16px; text-align:left; box-shadow:0 2px 8px var(--shadow); }
+  .actual-box h3{ color:var(--romana); }
+
+  .nav-arrows{ display:flex; justify-content:space-between; align-items:center; max-width:640px; margin:26px auto 4px auto; padding:0 4px; }
+  .arrow-btn{ display:flex; align-items:center; gap:8px; background:transparent; border:none; cursor:pointer; font-family:Arial, sans-serif; font-weight:700; font-size:0.85rem; color:var(--gold-deep); padding:8px 6px; }
+  .arrow-btn:hover{ color:var(--romana); }
+  .arrow-btn span.circ{ width:34px;height:34px;border-radius:50%; border:2px solid currentColor; display:flex;align-items:center;justify-content:center; font-size:1rem; }
+
+  .dots{ display:flex; justify-content:center; gap:7px; margin:22px 0 6px 0; flex-wrap:wrap; }
+  .dot{ width:9px;height:9px;border-radius:50%; background:rgba(110,95,71,0.3); border:none; cursor:pointer; padding:0; }
+  .dot.on{ background:var(--gold-deep); transform:scale(1.3); }
+
+  @media (max-width: 480px){
+    .detail-medal{ width:120px; height:120px; }
+    .detail-body h2{ font-size:1.3rem; }
+    .info-block p{ font-size:0.98rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="column-deco left"></div>
+<div class="column-deco right"></div>
+
+<div id="app">
+
+  <section id="timeline-screen" class="screen">
+    <div class="top-title">
+      <h1>🏛️ El Estoicismo</h1>
+      <p>Línea del tiempo interactiva · Equipo 1</p>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--antigua)"></i>Estoa Antigua</span>
+      <span><i style="background:var(--media)"></i>Estoa Media</span>
+      <span><i style="background:var(--romana)"></i>Estoa Romana / Nueva</span>
+    </div>
+    <div class="rail-wrap"><div class="rail" id="rail"></div></div>
+    <p class="hint">👉 Toca el <b>medallón</b> o el <b>nombre</b> de un filósofo para ver su historia completa</p>
+    <p class="hint" style="margin-top:-22px;">🖼️ Zenón, Crisipo, Séneca, Epicteto y Marco Aurelio muestran su retrato antiguo real; el resto conserva un emblema alegórico porque no existe un retrato identificado de ellos.</p>
+    <footer class="credit">Actividad Fundamental #1 — Escuelas Filosóficas · UANL FIME</footer>
+  </section>
+
+  <section id="detail-screen" class="screen">
+    <div class="detail-topbar">
+      <button class="back-btn" id="backBtn">← Línea del tiempo</button>
+      <span class="progress" id="progressLabel">1 / 10</span>
+    </div>
+    <div class="detail-body">
+      <div class="fade-wrap" id="fadeWrap">
+        <div id="medalHolder" class="detail-medal"></div>
+        <p id="creditLbl" class="img-credit"></p>
+        <span class="era-pill" id="eraPill"></span>
+        <h2 id="nameLbl"></h2>
+        <div class="years" id="yearsLbl"></div>
+        <div class="info-block">
+          <h3>🧭 ¿Quién fue?</h3>
+          <p id="bioLbl"></p>
+        </div>
+        <div class="info-block">
+          <h3>📜 Aportación principal</h3>
+          <p id="aporteLbl"></p>
+        </div>
+        <div class="info-block">
+          <h3>📚 Obra clave</h3>
+          <p id="obraLbl"></p>
+        </div>
+        <div class="actual-box">
+          <h3>🌍 Vínculo con la actualidad</h3>
+          <p id="actualLbl"></p>
+        </div>
+      </div>
+      <div class="nav-arrows">
+        <button class="arrow-btn" id="prevBtn"><span class="circ">‹</span> Anterior</button>
+        <button class="arrow-btn" id="nextBtn">Siguiente <span class="circ">›</span></button>
+      </div>
+      <div class="dots" id="dots"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const philosophers = [
+  { id:1, name:"Zenón de Citio", years:"c. 334–262 a.C.", era:"antigua", repYear:-298, badge:"torch",
+    img:"https://www.worldhistory.org/uploads/images/2916.jpg",
+    imgCredit:"Busto romano de Zenón (Musée des Beaux-Arts, Lyon). Foto: Rama — World History Encyclopedia, CC BY-SA.",
+    bio:"Nació en Citio (Chipre), de familia de comerciantes de origen fenicio-griego. Llegó a Atenas tras sobrevivir a un naufragio y, según cuenta Diógenes Laercio, descubrió la filosofía leyendo a Sócrates en la librería de un mercader. Estudió con los cínicos y los megáricos antes de fundar su propia escuela hacia el año 301 a.C.",
+    obra:"No se conserva ninguna obra completa; se le atribuyen tratados como La República y Sobre la naturaleza, conocidos solo por fragmentos citados por autores posteriores.",
+    aporte:"Fundador del Estoicismo. Enseñó en la Stoa Poikile (\"pórtico pintado\") de Atenas, de donde la escuela toma su nombre. Sostuvo que la virtud es el único bien verdadero y que la felicidad consiste en vivir conforme a la naturaleza y a la razón universal (logos). Dividió la filosofía en lógica, física y ética, estructura que conservaría toda la escuela.",
+    actual:"Su idea de que el bienestar depende de la coherencia interna y no de bienes externos es la base de corrientes actuales de psicología positiva y bienestar emocional." },
+  { id:2, name:"Cleantes de Aso", years:"c. 330–230 a.C.", era:"antigua", repYear:-280, badge:"sun",
+    bio:"De origen humilde, llegó a Atenas como boxeador y se mantuvo trabajando como aguador durante la noche mientras asistía de día a las clases de Zenón. Sucedió a su maestro como segundo escolarca de la Stoa y dirigió la escuela durante 32 años, defendiéndola con enorme disciplina personal en una época de escasos recursos.",
+    obra:"Himno a Zeus, el texto estoico más extenso que se conserva casi íntegro; también escribió tratados de física y lógica hoy perdidos.",
+    aporte:"Segundo escolarca de la Stoa. Autor del Himno a Zeus, reforzó la idea de un cosmos racional gobernado por la providencia divina y defendió la escuela con gran disciplina y rigor personal, dando ejemplo práctico de la coherencia entre doctrina y forma de vida.",
+    actual:"Su visión de un universo ordenado dialoga con el debate ecológico actual: la idea de que el ser humano forma parte de un sistema natural que debe respetar y no explotar." },
+  { id:3, name:"Crisipo de Solos", years:"c. 279–206 a.C.", era:"antigua", repYear:-242, badge:"owl",
+    img:"https://www.worldhistory.org/uploads/images/5077.jpg",
+    imgCredit:"Copia romana de un original griego perdido (British Museum, Londres). Foto: Osama Shukir Muhammed Amin — World History Encyclopedia.",
+    bio:"Nacido en Solos (Cilicia), se dice que escribió más de 700 tratados —según la tradición, quinientas líneas diarias— convirtiéndose en el sistematizador definitivo de la doctrina estoica. Se le atribuye la frase: \"si no hubiera existido Crisipo, no existiría la Estoa\".",
+    obra:"Ninguna de sus obras sobrevive completa; su pensamiento se reconstruye a partir de citas y resúmenes conservados en Cicerón, Plutarco y Diógenes Laercio.",
+    aporte:"Tercer escolarca y gran sistematizador de la lógica y la física estoicas; es considerado el padre de la lógica proposicional. Desarrolló la teoría del destino (fatum), compatible con la responsabilidad moral y el asentimiento racional del individuo ante los estímulos externos.",
+    actual:"Su discusión sobre libertad y determinismo anticipa debates contemporáneos sobre el libre albedrío frente a algoritmos, condicionamientos sociales y neurociencia." },
+  { id:4, name:"Panecio de Rodas", years:"c. 185–110 a.C.", era:"media", repYear:-147, badge:"scale",
+    bio:"Formó parte del Círculo de los Escipiones en Roma, donde convivió con la aristocracia romana y difundió el Estoicismo adaptándolo a la mentalidad práctica de Roma. Fue maestro de Posidonio y el último gran escolarca de la Estoa en Atenas.",
+    obra:"Sobre los deberes (Perí toû kathékontos), obra perdida pero conocida en detalle porque sirvió de fuente directa al De Officiis de Cicerón.",
+    aporte:"Introdujo el Estoicismo en Roma a través del Círculo de los Escipiones. Suavizó el rigorismo original —para el que solo el sabio perfecto alcanzaba la virtud— y propuso una ética de deberes graduales, accesible a la persona común según su papel social.",
+    actual:"Su ética de los deberes según el rol social se conecta con los códigos de ética profesional y la responsabilidad social corporativa vigentes en las organizaciones actuales." },
+  { id:5, name:"Posidonio de Apamea", years:"c. 135–51 a.C.", era:"media", repYear:-93, badge:"star",
+    bio:"Nacido en Apamea (Siria), estudió con Panecio en Atenas y fundó su propia escuela en Rodas, donde tuvo entre sus discípulos a Cicerón y Pompeyo. Viajó por Hispania, la Galia y el norte de África realizando observaciones astronómicas y geográficas de primera mano.",
+    obra:"Historia (continuación de la obra de Polibio) y tratados sobre las mareas y la circunferencia terrestre; se conservan solo por referencias de autores posteriores.",
+    aporte:"Filósofo y científico; combinó el Estoicismo con la astronomía, la geografía y la historia, e integró ideas platónicas sobre las partes irracionales del alma para explicar el origen de las pasiones humanas, matizando el racionalismo estricto de Crisipo.",
+    actual:"Su enfoque interdisciplinario —filosofía y ciencia unidas— anticipa la divulgación científica actual y el diálogo necesario entre humanidades y ciencias exactas." },
+  { id:6, name:"Séneca", years:"c. 4 a.C.–65 d.C.", era:"romana", repYear:30, badge:"scroll",
+    img:"https://www.worldhistory.org/uploads/images/12389.jpg",
+    imgCredit:"Herma doble de Sócrates y Séneca (Antikensammlung, Berlín). Foto: Matas Petrikas — World History Encyclopedia, CC BY-NC.",
+    bio:"Nacido en Córdoba (Hispania), se trasladó a Roma de niño para formarse en retórica y filosofía. Fue senador y preceptor del joven Nerón, quien años después, acusándolo de conspiración, lo obligó a quitarse la vida.",
+    obra:"Cartas a Lucilio, Sobre la brevedad de la vida, De la ira y tragedias como Medea y Fedra.",
+    aporte:"Filósofo, dramaturgo y político romano. En Cartas a Lucilio y Sobre la brevedad de la vida ofrece una ética práctica sobre el uso del tiempo, la riqueza, la muerte y el control de las emociones, dirigida a personas comunes y no solo a sabios ideales.",
+    actual:"Su reflexión sobre el uso del tiempo y la ansiedad ante el futuro es citada hoy en la prevención del burnout laboral y en la cultura de la productividad consciente." },
+  { id:7, name:"Musonio Rufo", years:"c. 30–101 d.C.", era:"romana", repYear:65, badge:"book",
+    bio:"Caballero romano exiliado en dos ocasiones —bajo Nerón y bajo Vespasiano— por emperadores que desconfiaban del poder crítico de los filósofos. Formó en Roma a una generación de estoicos, entre ellos al joven esclavo Epicteto.",
+    obra:"No dejó escritos propios; sus enseñanzas se conservan como Diatribas, recopiladas por sus discípulos Lucio y Pollio.",
+    aporte:"Maestro de Epicteto. Defendió que hombres y mujeres poseen la misma capacidad racional y, por tanto, el mismo derecho a la educación filosófica y a la práctica de la virtud, una postura muy adelantada a su tiempo.",
+    actual:"Su postura constituye un antecedente histórico de la lucha contemporánea por la igualdad de género en el acceso a la educación y a la vida pública." },
+  { id:8, name:"Epicteto", years:"c. 55–135 d.C.", era:"romana", repYear:95, badge:"key",
+    img:"https://www.worldhistory.org/uploads/images/3388.jpg",
+    imgCredit:"No existe retrato antiguo auténtico de Epicteto. Imagen: representación artística posterior (grabado de Oxford, 1751) — World History Encyclopedia, dominio público.",
+    bio:"Nació esclavo en Hierápolis (Frigia) y fue llevado a Roma, donde su amo le permitió estudiar con Musonio Rufo. Ya liberado, enseñó filosofía en Roma hasta que el emperador Domiciano expulsó a todos los filósofos en el año 89 d.C., por lo que se trasladó a Nicópolis, en Grecia, donde fundó su propia escuela.",
+    obra:"No escribió nada él mismo; su discípulo Arriano recopiló sus lecciones en el Enquiridión (Manual) y las Disertaciones.",
+    aporte:"Esclavo liberado convertido en maestro. En el Enquiridión formuló la célebre dicotomía de control: distinguir entre lo que depende de nosotros (juicios y actos propios) y lo que no depende de nosotros (opinión ajena, salud, fortuna, reputación).",
+    actual:"Es la base filosófica directa de la Terapia Cognitivo-Conductual (TCC) y de múltiples aplicaciones actuales de bienestar mental frente a la ansiedad y el estrés." },
+  { id:9, name:"Hierocles", years:"Siglo II d.C.", era:"romana", repYear:150, badge:"circles",
+    bio:"Se sabe muy poco de su vida; probablemente enseñó en Roma durante el reinado de Adriano o Antonino Pío. Su obra sobrevivió de forma fragmentaria gracias a que Estobeo, un compilador del siglo V d.C., copió extractos suyos en su Antología.",
+    obra:"Elementos de ética y el tratado Sobre cómo comportarse con los familiares, fuente de la teoría de los círculos concéntricos.",
+    aporte:"Desarrolló la teoría de los círculos de la oikeiosis: el individuo debe extender su afecto en círculos concéntricos —de sí mismo a la familia, la comunidad y toda la humanidad— acercando cada círculo al centro mediante el esfuerzo moral consciente.",
+    actual:"Su modelo de cosmopolitismo se cita en debates actuales sobre derechos humanos, migración y responsabilidad global frente al cambio climático." },
+  { id:10, name:"Marco Aurelio", years:"121–180 d.C.", era:"romana", repYear:170, badge:"laurel",
+    img:"https://www.worldhistory.org/uploads/images/5998.jpg",
+    imgCredit:"Busto romano, h. 160–170 d.C. (British Museum, Londres). Foto: Osama Shukir Muhammed Amin — World History Encyclopedia.",
+    bio:"Último de los llamados \"cinco buenos emperadores\" de Roma, gobernó de 161 a 180 d.C. en medio de guerras contra pueblos germánicos y una devastadora epidemia (la peste antonina). Escribió sus reflexiones personales, sin intención de publicarlas, durante las campañas militares en el limes del Danubio.",
+    obra:"Meditaciones (Ta eis heautón, \"Para sí mismo\"), un diario filosófico privado descubierto y difundido siglos después de su muerte.",
+    aporte:"Emperador romano y filósofo. En Meditaciones practica el autoexamen constante, la aceptación del cambio y el desapego de lo externo, aplicando la teoría estoica al ejercicio real del poder y a la toma de decisiones bajo presión extrema.",
+    actual:"Su modelo de liderazgo sereno bajo presión es hoy referencia en programas de liderazgo, toma de decisiones y manejo del estrés en entornos de alta exigencia." },
+];
+
+const eraColor = { antigua:["#8a5a2b","#c98f52"], media:["#4f6b52","#7fa07f"], romana:["#6a3b46","#a25d6b"] };
+const eraLabel = { antigua:"Estoa Antigua", media:"Estoa Media", romana:"Estoa Romana / Nueva" };
+
+function badgeIcon(type, color){
+  const c = color;
+  switch(type){
+    case "torch": return `<path d="M50 20 C46 30 46 36 50 40 C54 36 54 30 50 20 Z" fill="${c}"/><rect x="47" y="40" width="6" height="16" rx="2" fill="${c}"/>`;
+    case "sun": return `<circle cx="50" cy="34" r="7" fill="${c}"/>${[0,45,90,135,180,225,270,315].map(a=>`<line x1="50" y1="34" x2="${50+16*Math.cos(a*Math.PI/180)}" y2="${34+16*Math.sin(a*Math.PI/180)}" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/>`).join('')}`;
+    case "owl": return `<ellipse cx="50" cy="34" rx="11" ry="9" fill="${c}"/><circle cx="45" cy="32" r="3" fill="#fff"/><circle cx="55" cy="32" r="3" fill="#fff"/><path d="M50 36 l-3 4 h6 z" fill="#fff"/>`;
+    case "scale": return `<line x1="50" y1="20" x2="50" y2="44" stroke="${c}" stroke-width="3"/><line x1="36" y1="26" x2="64" y2="26" stroke="${c}" stroke-width="3"/><path d="M36 26 l-6 12 h12 z" fill="none" stroke="${c}" stroke-width="2.4"/><path d="M64 26 l-6 12 h12 z" fill="none" stroke="${c}" stroke-width="2.4"/>`;
+    case "star": return `<path d="M50 18 L54 30 L67 30 L57 38 L61 51 L50 43 L39 51 L43 38 L33 30 L46 30 Z" fill="${c}"/>`;
+    case "scroll": return `<rect x="36" y="24" width="28" height="20" rx="3" fill="${c}"/><rect x="33" y="22" width="6" height="24" rx="3" fill="${c}"/><rect x="61" y="22" width="6" height="24" rx="3" fill="${c}"/>`;
+    case "book": return `<path d="M50 22 C46 20 40 19 35 20 v20 c5 -1 11 0 15 2 c4 -2 10 -3 15 -2 V20 c-5 -1 -11 0 -15 2 Z" fill="${c}"/>`;
+    case "key": return `<circle cx="40" cy="30" r="8" fill="none" stroke="${c}" stroke-width="4"/><line x1="47" y1="35" x2="63" y2="51" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="55" y1="43" x2="60" y2="38" stroke="${c}" stroke-width="4" stroke-linecap="round"/>`;
+    case "circles": return `<circle cx="50" cy="34" r="16" fill="none" stroke="${c}" stroke-width="2"/><circle cx="50" cy="34" r="10" fill="none" stroke="${c}" stroke-width="2.4"/><circle cx="50" cy="34" r="4" fill="${c}"/>`;
+    case "laurel": return `<path d="M50 20 v28" stroke="${c}" stroke-width="2.5"/>${[6,13,20].map(y=>`<ellipse cx="${44-y*0.15}" cy="${22+y}" rx="5" ry="2.6" fill="${c}" transform="rotate(-30 ${44-y*0.15} ${22+y})"/><ellipse cx="${56+y*0.15}" cy="${22+y}" rx="5" ry="2.6" fill="${c}" transform="rotate(30 ${56+y*0.15} ${22+y})"/>`).join('')}`;
+    default: return "";
+  }
+}
+
+function photoMedalHTML(p, size){
+  return `<div class="photo-medal" style="width:${size}px;height:${size}px;">
+    <img src="${p.img}" alt="Retrato de ${p.name}" loading="lazy"
+         onerror="this.closest('.photo-medal').outerHTML = medallionSVG(philosophers.find(x=>x.id===${p.id}), ${size});">
+    <div class="ring"></div>
+    <div class="num">${p.id}</div>
+  </div>`;
+}
+function medallionMarkup(p, size){
+  return p.img ? photoMedalHTML(p, size) : medallionSVG(p, size);
+}
+function medallionSVG(p, size){
+  const [dark, light] = eraColor[p.era];
+  const gid = "grad" + p.id + "_" + size;
+  return `
+  <svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <defs>
+      <radialGradient id="${gid}" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="${light}"/>
+        <stop offset="70%" stop-color="${dark}"/>
+        <stop offset="100%" stop-color="#2b2013"/>
+      </radialGradient>
+    </defs>
+    <circle cx="50" cy="50" r="47" fill="url(#${gid})" stroke="#fffdf7" stroke-width="3"/>
+    <circle cx="50" cy="50" r="41" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.4" stroke-dasharray="2 3"/>
+    <path d="M50 46 c-8 0 -13 6 -13 13 v10 c0 3 3 5 6 5 h14 c3 0 6 -2 6 -5 v-10 c0 -7 -5 -13 -13 -13 Z" fill="rgba(255,253,247,0.9)"/>
+    <circle cx="50" cy="38" r="10" fill="rgba(255,253,247,0.9)"/>
+    ${badgeIcon(p.badge, "rgba(255,253,247,0.95)")}
+    <text x="50" y="90" text-anchor="middle" font-family="Cinzel, serif" font-size="10" fill="#fffdf7" font-weight="700">${p.id}</text>
+  </svg>`;
+}
+
+const rail = document.getElementById('rail');
+const minYear=-350, maxYear=200, width=1400, offsetX=20;
+function yearToX(y){ return offsetX + ((y-minYear)/(maxYear-minYear))*width; }
+
+rail.innerHTML += `<div class="axis"></div>`;
+for(let y=-350; y<=200; y+=50){
+  const x = yearToX(y);
+  rail.innerHTML += `<div class="tick" style="left:${x}px"></div>
+    <div class="tick-label" style="left:${x}px">${y<0? Math.abs(y)+' a.C.' : (y===0?'0':y+' d.C.')}</div>`;
+}
+
+philosophers.forEach((p,i)=>{
+  const x = yearToX(p.repYear);
+  const btn = document.createElement('button');
+  btn.className = 'medal-btn';
+  btn.style.left = x+'px';
+  btn.innerHTML = medallionMarkup(p, 64);
+  btn.setAttribute('aria-label', p.name);
+  btn.addEventListener('click', (e)=> openDetail(p.id, e.clientX, e.clientY));
+  rail.appendChild(btn);
+
+  const tag = document.createElement('div');
+  tag.className = 'name-tag ' + (i%2===0 ? 'above' : 'below');
+  tag.style.left = x+'px';
+  tag.innerHTML = `${p.name}<span class="yrs">${p.years}</span>`;
+  tag.addEventListener('click', (e)=> openDetail(p.id, e.clientX, e.clientY));
+  rail.appendChild(tag);
+});
+
+const dotsWrap = document.getElementById('dots');
+philosophers.forEach(p=>{
+  const d = document.createElement('button');
+  d.className='dot';
+  d.dataset.id = p.id;
+  d.addEventListener('click', ()=> renderDetail(p.id, true));
+  dotsWrap.appendChild(d);
+});
+
+let currentId = 1;
+const detailScreen = document.getElementById('detail-screen');
+const fadeWrap = document.getElementById('fadeWrap');
+
+function openDetail(id, clientX, clientY){
+  const x = clientX!=null ? (clientX/window.innerWidth*100) : 50;
+  const y = clientY!=null ? (clientY/window.innerHeight*100) : 50;
+  detailScreen.style.setProperty('--ox', x+'%');
+  detailScreen.style.setProperty('--oy', y+'%');
+  renderDetail(id, false);
+  requestAnimationFrame(()=> detailScreen.classList.add('open'));
+}
+function closeDetail(){ detailScreen.classList.remove('open'); }
+
+function renderDetail(id, animate){
+  currentId = id;
+  const p = philosophers.find(ph=>ph.id===id);
+  const [dark] = eraColor[p.era];
+
+  function paint(){
+    document.getElementById('medalHolder').innerHTML = medallionMarkup(p, 150);
+    const pill = document.getElementById('eraPill');
+    pill.textContent = eraLabel[p.era];
+    pill.style.background = dark;
+    document.getElementById('nameLbl').textContent = p.name;
+    document.getElementById('yearsLbl').textContent = p.years;
+    document.getElementById('bioLbl').textContent = p.bio || "";
+    document.getElementById('aporteLbl').textContent = p.aporte;
+    document.getElementById('obraLbl').textContent = p.obra || "";
+    document.getElementById('actualLbl').textContent = p.actual;
+    document.getElementById('creditLbl').textContent = p.imgCredit || "";
+    document.getElementById('progressLabel').textContent = `${p.id} / 10`;
+    document.querySelectorAll('.dot').forEach(d=> d.classList.toggle('on', Number(d.dataset.id)===p.id));
+  }
+
+  if(animate){
+    fadeWrap.classList.add('fading');
+    setTimeout(()=>{ paint(); fadeWrap.classList.remove('fading'); }, 180);
+  } else {
+    paint();
+  }
+}
+
+document.getElementById('backBtn').addEventListener('click', closeDetail);
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  const idx = philosophers.findIndex(p=>p.id===currentId);
+  const prev = philosophers[(idx-1+philosophers.length)%philosophers.length];
+  renderDetail(prev.id, true);
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  const idx = philosophers.findIndex(p=>p.id===currentId);
+  const next = philosophers[(idx+1)%philosophers.length];
+  renderDetail(next.id, true);
+});
+
+let touchStartX = null;
+detailScreen.addEventListener('touchstart', e=> touchStartX = e.touches[0].clientX, {passive:true});
+detailScreen.addEventListener('touchend', e=>{
+  if(touchStartX==null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(Math.abs(dx) > 60){
+    const idx = philosophers.findIndex(p=>p.id===currentId);
+    if(dx < 0){ renderDetail(philosophers[(idx+1)%philosophers.length].id, true); }
+    else { renderDetail(philosophers[(idx-1+philosophers.length)%philosophers.length].id, true); }
+  }
+  touchStartX = null;
+});
+
+renderDetail(1, false);
+</script>
+</body>
+</html>
