@@ -37,6 +37,21 @@
   }
   h1,h2,h3,.display{font-family:'Cinzel', serif;}
 
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(160deg, rgba(242,236,221,0.82), rgba(231,220,194,0.86)),
+      url('https://www.worldhistory.org/uploads/images/943.jpg');
+    background-size:cover;
+    background-position:center 35%;
+    filter:blur(5px) saturate(0.75);
+    opacity:0.55;
+    z-index:-1;
+    pointer-events:none;
+  }
+
   .column-deco{
     position:fixed; top:0; bottom:0; width:46px;
     background:
@@ -130,13 +145,11 @@
   .progress{ font-family:Arial, sans-serif; font-size:0.78rem; color:var(--sub); }
 
   .detail-body{ max-width:640px; margin:0 auto; padding:10px 22px 60px 22px; text-align:center; }
-  .detail-medal{ width:150px; height:150px; margin:10px auto 14px auto; filter:drop-shadow(0 6px 10px var(--shadow)); }
+  .detail-medal{ width:220px; height:220px; margin:10px auto 18px auto; filter:drop-shadow(0 6px 10px var(--shadow)); }
   .photo-medal{ position:relative; border-radius:50%; overflow:hidden; box-shadow:0 3px 8px var(--shadow); background:#ddd; }
   .photo-medal img{ width:100%; height:100%; object-fit:cover; display:block; }
   .photo-medal .ring{ position:absolute; inset:0; border-radius:50%; box-shadow:inset 0 0 0 4px rgba(255,253,247,0.85), inset 0 0 16px rgba(0,0,0,0.35); pointer-events:none; }
   .photo-medal .num{ position:absolute; right:2px; bottom:0; font-family:'Cinzel',serif; font-weight:700; color:#fffdf7; font-size:0.7em; background:rgba(43,32,19,0.55); width:22%; height:22%; min-width:16px; min-height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-  .img-credit{ font-size:0.68rem; color:var(--sub); font-family:Arial, sans-serif; font-style:italic; text-align:center; margin:-6px 0 14px 0; line-height:1.35; }
-  .no-portrait-note{ font-size:0.68rem; color:var(--sub); font-family:Arial, sans-serif; font-style:italic; text-align:center; margin:-6px 0 14px 0; }
   .era-pill{
     display:inline-block; font-family:Arial, sans-serif; font-size:0.72rem;
     font-weight:700; letter-spacing:0.5px; text-transform:uppercase;
@@ -164,7 +177,7 @@
   .dot.on{ background:var(--gold-deep); transform:scale(1.3); }
 
   @media (max-width: 480px){
-    .detail-medal{ width:120px; height:120px; }
+    .detail-medal{ width:160px; height:160px; }
     .detail-body h2{ font-size:1.3rem; }
     .info-block p{ font-size:0.98rem; }
   }
@@ -179,7 +192,7 @@
 
   <section id="timeline-screen" class="screen">
     <div class="top-title">
-      <h1>🏛️ El Estoicismo</h1>
+      <h1>El Estoicismo</h1>
       <p>Línea del tiempo interactiva · Equipo 1</p>
     </div>
     <div class="legend">
@@ -188,9 +201,8 @@
       <span><i style="background:var(--romana)"></i>Estoa Romana / Nueva</span>
     </div>
     <div class="rail-wrap"><div class="rail" id="rail"></div></div>
-    <p class="hint"> Toca el <b>medallón</b> o el <b>nombre</b> de un filósofo para ver su historia completa</p>
-    <p class="hint" style="margin-top:-22px;"> Zenón, Crisipo, Séneca, Epicteto y Marco Aurelio muestran su retrato antiguo real; el resto conserva un emblema alegórico porque no existe un retrato identificado de ellos.</p>
-    <footer class="credit">Actividad Fundamental #1 · UANL FIME</footer>
+    <p class="hint">Toca el <b>medallón</b> o el <b>nombre</b> de un filósofo para ver su historia completa</p>
+    <footer class="credit">Actividad Fundamental #1 — Escuelas Filosóficas · UANL FIME</footer>
   </section>
 
   <section id="detail-screen" class="screen">
@@ -201,17 +213,16 @@
     <div class="detail-body">
       <div class="fade-wrap" id="fadeWrap">
         <div id="medalHolder" class="detail-medal"></div>
-        <p id="creditLbl" class="img-credit"></p>
         <span class="era-pill" id="eraPill"></span>
         <h2 id="nameLbl"></h2>
         <div class="years" id="yearsLbl"></div>
         <div class="info-block">
-          <h3>🧭 ¿Quién fue?</h3>
+          <h3>¿Quién fue?</h3>
           <p id="bioLbl"></p>
         </div>
         <div id="temasContainer"></div>
         <div class="actual-box">
-          <h3>🌍 Vínculo con la actualidad</h3>
+          <h3>Vínculo con la actualidad</h3>
           <p id="actualLbl"></p>
         </div>
       </div>
@@ -229,8 +240,7 @@
 const philosophers = [
   { id:1, name:"Zenón de Citio", years:"c. 334–262 a.C.", era:"antigua", repYear:-298, badge:"torch",
     img:"https://www.worldhistory.org/uploads/images/2916.jpg",
-    imgCredit:"Busto romano de Zenón (Musée des Beaux-Arts, Lyon). Foto: Rama — World History Encyclopedia, CC BY-SA.",
-    bio:"Filósofo griego nacido en Citio (Chipre), de familia de comerciantes de origen fenicio-griego. Tras sobrevivir a un naufragio llegó a Atenas, donde estudió con los cínicos (Crates) y los megáricos (Estilpón, Diodoro Crono) antes de fundar, hacia el 301 a.C., su propia escuela en la Stoa Poikile ("pórtico pintado"), de la que tomó su nombre el Estoicismo, una de las corrientes más influyentes de la filosofía helenística.",
+    bio:"Filósofo griego nacido en Citio (Chipre), de familia de comerciantes de origen fenicio-griego. Tras sobrevivir a un naufragio llegó a Atenas, donde estudió con los cínicos (Crates) y los megáricos (Estilpón, Diodoro Crono) antes de fundar, hacia el 301 a.C., su propia escuela en la Stoa Poikile (\"pórtico pintado\"), de la que tomó su nombre el Estoicismo, una de las corrientes más influyentes de la filosofía helenística.",
     temas:[
       {titulo:"Lógica y teoría del conocimiento.", texto:"Zenón dividió la filosofía en lógica, física y ética, estructura que conservaría toda la escuela. Introdujo la doctrina de la katalepsis (\"comprensión\"): una representación tan clara y distinta que garantiza por sí misma su verdad; solo el asentimiento racional a este tipo de impresiones produce conocimiento seguro."},
       {titulo:"Física y cosmología.", texto:"Concibió el universo como un ser vivo y racional gobernado por el logos (razón divina), identificado con un \"fuego artesano\" (pyr technikón) que da forma a toda la materia. De esta cosmovisión deriva su consigna de vivir conforme a la naturaleza."},
@@ -239,6 +249,7 @@ const philosophers = [
     actual:"Su idea de que el bienestar depende de la coherencia interna y no de bienes externos es la base de corrientes actuales de psicología positiva y bienestar emocional. Además, su distinción entre lo que depende de uno y lo que no anticipa técnicas modernas de gestión del estrés y la ansiedad." },
 
   { id:2, name:"Cleantes de Aso", years:"c. 330–230 a.C.", era:"antigua", repYear:-280, badge:"sun",
+    img:"https://www.worldhistory.org/uploads/images/6807.jpg",
     bio:"De origen humilde, llegó a Atenas como boxeador y se mantuvo trabajando como aguador durante la noche mientras asistía de día a las clases de Zenón. Sucedió a su maestro como segundo escolarca de la Stoa y dirigió la escuela durante 32 años, defendiéndola con enorme disciplina personal en una época de escasos recursos económicos.",
     temas:[
       {titulo:"Teología y física.", texto:"Su obra más célebre, el Himno a Zeus, presenta a la divinidad como razón universal que gobierna el cosmos con providencia; con ella reforzó el carácter panteísta del Estoicismo, en el que Dios, la naturaleza y la razón son una misma realidad."},
@@ -249,7 +260,6 @@ const philosophers = [
 
   { id:3, name:"Crisipo de Solos", years:"c. 279–206 a.C.", era:"antigua", repYear:-242, badge:"owl",
     img:"https://www.worldhistory.org/uploads/images/5077.jpg",
-    imgCredit:"Copia romana de un original griego perdido (British Museum, Londres). Foto: Osama Shukir Muhammed Amin — World History Encyclopedia.",
     bio:"Nacido en Solos (Cilicia), se dice que escribió más de 700 tratados —quinientas líneas diarias, según la tradición— convirtiéndose en el sistematizador definitivo de la doctrina estoica. Se le atribuye la frase: \"si no hubiera existido Crisipo, no existiría la Estoa\".",
     temas:[
       {titulo:"Lógica.", texto:"Es considerado el padre de la lógica proposicional, anterior en siglos a la lógica simbólica moderna. Sistematizó los llamados \"indemostrables\", esquemas de inferencia válida (por ejemplo: \"si P entonces Q; P; luego Q\") que ampliaban el alcance de la lógica de términos de Aristóteles."},
@@ -259,6 +269,7 @@ const philosophers = [
     actual:"Su discusión sobre libertad y determinismo anticipa debates contemporáneos sobre el libre albedrío frente a la genética, los condicionamientos sociales y los algoritmos predictivos. Su teoría de las pasiones como juicios erróneos es, además, la semilla directa de la moderna terapia cognitivo-conductual." },
 
   { id:4, name:"Panecio de Rodas", years:"c. 185–110 a.C.", era:"media", repYear:-147, badge:"scale",
+    img:"https://www.worldhistory.org/uploads/images/6807.jpg",
     bio:"Formó parte del Círculo de los Escipiones en Roma, donde convivió con la aristocracia romana y adaptó el Estoicismo a su mentalidad práctica. Fue maestro de Posidonio y el último gran escolarca de la Estoa en Atenas, marcando la transición hacia el llamado \"Estoicismo medio\".",
     temas:[
       {titulo:"Ética de los deberes.", texto:"En Sobre los deberes (obra perdida, conocida en detalle por el De Officiis de Cicerón) distinguió entre el deber \"perfecto\" (téleion), reservado al sabio ideal, y el deber \"medio\" (méson), accesible a cualquier persona según su papel social; con ello hizo la ética estoica mucho más practicable."},
@@ -268,6 +279,7 @@ const philosophers = [
     actual:"Su ética de los deberes graduales según el rol social se conecta directamente con los códigos de ética profesional y la responsabilidad social corporativa vigentes hoy en las organizaciones, donde se exige un comportamiento adecuado al cargo antes que la perfección moral absoluta." },
 
   { id:5, name:"Posidonio de Apamea", years:"c. 135–51 a.C.", era:"media", repYear:-93, badge:"star",
+    img:"https://www.worldhistory.org/uploads/images/13095.jpg",
     bio:"Nacido en Apamea (Siria), estudió con Panecio en Atenas y fundó su propia escuela en Rodas, donde tuvo entre sus discípulos a Cicerón y fue visitado por Pompeyo. Viajó por Hispania, la Galia y el norte de África realizando observaciones astronómicas y geográficas de primera mano, algo inusual entre los filósofos de su época.",
     temas:[
       {titulo:"Física: la simpatía universal.", texto:"Propuso la cosmología de la sympátheia: concibió el cosmos como un organismo vivo en el que todas sus partes están interconectadas y se influyen mutuamente (por ejemplo, explicó las mareas por la atracción de la luna), idea que reforzaba filosóficamente la unidad del universo estoico."},
@@ -279,7 +291,6 @@ const philosophers = [
 
   { id:6, name:"Séneca", years:"c. 4 a.C.–65 d.C.", era:"romana", repYear:30, badge:"scroll",
     img:"https://www.worldhistory.org/uploads/images/12389.jpg",
-    imgCredit:"Herma doble de Sócrates y Séneca (Antikensammlung, Berlín). Foto: Matas Petrikas — World History Encyclopedia, CC BY-NC.",
     bio:"Nacido en Córdoba (Hispania), se trasladó a Roma de niño para formarse en retórica y filosofía. Fue senador, dramaturgo y preceptor del joven Nerón, quien años después, acusándolo de conspiración, lo obligó a quitarse la vida.",
     temas:[
       {titulo:"Ética práctica.", texto:"En Cartas a Lucilio y Sobre la brevedad de la vida ofrece una ética aplicada a la vida cotidiana: cómo administrar el tiempo (el único bien realmente propio), relativizar la riqueza y prepararse racionalmente para la muerte, dirigida a personas comunes y no solo a \"sabios\" ideales."},
@@ -290,6 +301,7 @@ const philosophers = [
     actual:"Su reflexión sobre el uso del tiempo y la ansiedad ante el futuro es citada hoy en la prevención del burnout laboral y en la cultura de la \"productividad consciente\"; sus técnicas de gestión de la ira son, además, antecedentes reconocidos de estrategias actuales de regulación emocional." },
 
   { id:7, name:"Musonio Rufo", years:"c. 30–101 d.C.", era:"romana", repYear:65, badge:"book",
+    img:"https://www.worldhistory.org/uploads/images/6798.jpg",
     bio:"Caballero romano exiliado en dos ocasiones —bajo Nerón y bajo Vespasiano— por emperadores que desconfiaban del poder crítico de los filósofos. Formó en Roma a una generación de estoicos, entre ellos al joven esclavo Epicteto, cuyo pensamiento influyó de forma decisiva.",
     temas:[
       {titulo:"Ética de la vida simple.", texto:"Defendió con radicalidad práctica que la filosofía debe traducirse en hábitos concretos —alimentación sencilla, vestido austero, rechazo del lujo— y no quedarse en teoría abstracta; para él, \"filosofar\" era, ante todo, entrenarse en vivir bien."},
@@ -300,7 +312,6 @@ const philosophers = [
 
   { id:8, name:"Epicteto", years:"c. 55–135 d.C.", era:"romana", repYear:95, badge:"key",
     img:"https://www.worldhistory.org/uploads/images/3388.jpg",
-    imgCredit:"No existe retrato antiguo auténtico de Epicteto. Imagen: representación artística posterior (grabado de Oxford, 1751) — World History Encyclopedia, dominio público.",
     bio:"Nació esclavo en Hierápolis (Frigia) y fue llevado a Roma, donde su amo le permitió estudiar con Musonio Rufo. Ya liberado, enseñó filosofía en Roma hasta que el emperador Domiciano expulsó a todos los filósofos en el año 89 d.C., por lo que se trasladó a Nicópolis (Grecia), donde fundó su propia escuela, muy concurrida incluso por senadores romanos.",
     temas:[
       {titulo:"Ética: la dicotomía de control.", texto:"En el Enquiridión formuló su idea más célebre: distinguir radicalmente entre lo que depende de nosotros (juicios, deseos e impulsos propios) y lo que no depende de nosotros (el cuerpo, la reputación, la opinión ajena, la fortuna); la perturbación emocional surge de confundir ambos planos."},
@@ -311,6 +322,7 @@ const philosophers = [
     actual:"Es la base filosófica directa de la Terapia Cognitivo-Conductual (TCC), formulada explícitamente por psicólogos como Albert Ellis a partir de su dicotomía de control; su ejemplo de dignidad y libertad interior pese a la esclavitud sigue siendo referencia en la reflexión sobre la libertad frente a las circunstancias adversas." },
 
   { id:9, name:"Hierocles", years:"Siglo II d.C.", era:"romana", repYear:150, badge:"circles",
+    img:"https://www.worldhistory.org/uploads/images/6800.jpg",
     bio:"Se sabe muy poco de su vida; probablemente enseñó en Roma durante el reinado de Adriano o Antonino Pío. Su obra sobrevivió de forma fragmentaria gracias a que Estobeo, un compilador del siglo V d.C., copió extractos suyos en su Antología, lo único que impidió su pérdida total.",
     temas:[
       {titulo:"Ética: la teoría de la oikeíosis.", texto:"Desarrolló con especial detalle la doctrina estoica de la oikeíosis (\"apropiación\" o familiarización), según la cual todo ser vivo se orienta naturalmente hacia su propia conservación y bienestar, y en el ser humano este impulso se extiende racionalmente hacia los demás."},
@@ -321,7 +333,6 @@ const philosophers = [
 
   { id:10, name:"Marco Aurelio", years:"121–180 d.C.", era:"romana", repYear:170, badge:"laurel",
     img:"https://www.worldhistory.org/uploads/images/5998.jpg",
-    imgCredit:"Busto romano, h. 160–170 d.C. (British Museum, Londres). Foto: Osama Shukir Muhammed Amin — World History Encyclopedia.",
     bio:"Último de los llamados \"cinco buenos emperadores\" de Roma, gobernó de 161 a 180 d.C. en medio de guerras contra pueblos germánicos y una devastadora epidemia (la peste antonina). Escribió sus reflexiones personales, sin intención de publicarlas, durante las campañas militares en el limes del Danubio.",
     temas:[
       {titulo:"Ética práctica: el autoexamen.", texto:"En Meditaciones (Ta eis heautón, \"Para sí mismo\") practica un ejercicio constante de autoexamen y autocrítica, revisando cada noche sus juicios y acciones del día para corregir sus propios errores, en la tradición pitagórico-estoica del examen de conciencia."},
@@ -436,27 +447,11 @@ function openDetail(id, clientX, clientY){
 }
 function closeDetail(){ detailScreen.classList.remove('open'); }
 
-function temaIcon(titulo){
-  const t = titulo.toLowerCase();
-  if(t.includes("lógica")) return "🧠";
-  if(t.includes("ética")) return "⚖️";
-  if(t.includes("polít")) return "🏛️";
-  if(t.includes("física") || t.includes("cosmo")) return "🌌";
-  if(t.includes("ciencia")) return "🔬";
-  if(t.includes("psicolog")) return "🧩";
-  if(t.includes("educac") || t.includes("pedagog")) return "📚";
-  if(t.includes("teolog")) return "✨";
-  if(t.includes("literatura")) return "🖋️";
-  if(t.includes("histori")) return "📜";
-  if(t.includes("antropolog") || t.includes("familiar") || t.includes("círculos")) return "🌐";
-  return "📌";
-}
-
 function paintTemas(temas){
   const box = document.getElementById('temasContainer');
   box.innerHTML = (temas||[]).map(t=>`
     <div class="info-block">
-      <h3>${temaIcon(t.titulo)} ${t.titulo}</h3>
+      <h3>${t.titulo}</h3>
       <p>${t.texto}</p>
     </div>`).join('');
 }
@@ -467,7 +462,7 @@ function renderDetail(id, animate){
   const [dark] = eraColor[p.era];
 
   function paint(){
-    document.getElementById('medalHolder').innerHTML = medallionMarkup(p, 150);
+    document.getElementById('medalHolder').innerHTML = medallionMarkup(p, 220);
     const pill = document.getElementById('eraPill');
     pill.textContent = eraLabel[p.era];
     pill.style.background = dark;
@@ -476,7 +471,6 @@ function renderDetail(id, animate){
     document.getElementById('bioLbl').textContent = p.bio || "";
     paintTemas(p.temas);
     document.getElementById('actualLbl').textContent = p.actual;
-    document.getElementById('creditLbl').textContent = p.imgCredit || "";
     document.getElementById('progressLabel').textContent = `${p.id} / 10`;
     document.querySelectorAll('.dot').forEach(d=> d.classList.toggle('on', Number(d.dataset.id)===p.id));
   }
