@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <title>El Estoicismo — Línea del tiempo interactiva</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
   :root{
     --marble-1:#f2ecdd;
@@ -27,7 +24,7 @@
   *{box-sizing:border-box;}
   html,body{
     margin:0;padding:0;height:100%;
-    font-family:'EB Garamond', Georgia, serif;
+    font-family:Georgia, 'Times New Roman', serif;
     color:var(--ink);
     background:
       radial-gradient(circle at 15% 20%, rgba(255,255,255,0.5), transparent 40%),
@@ -35,6 +32,257 @@
       linear-gradient(160deg, var(--marble-1), var(--marble-2));
     overflow:hidden;
   }
+  h1,h2,h3,.display{font-family:Georgia, 'Times New Roman', serif;}
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(circle at 20% 25%, rgba(255,255,255,0.48), transparent 34%),
+      radial-gradient(circle at 78% 70%, rgba(120,90,40,0.10), transparent 38%),
+      repeating-linear-gradient(0deg, rgba(110,95,71,0.035) 0 1px, transparent 1px 5px);
+    opacity:0.75;
+    z-index:-1;
+    pointer-events:none;
+  }
+
+  .column-deco{
+    position:fixed; top:0; bottom:0; width:46px;
+    background:
+      repeating-linear-gradient(90deg, rgba(120,90,40,0.10) 0 4px, transparent 4px 10px),
+      linear-gradient(180deg, rgba(120,90,40,0.05), rgba(120,90,40,0.15));
+    z-index:0; pointer-events:none;
+  }
+  .column-deco.left{left:0;}
+  .column-deco.right{right:0;}
+
+  #app{ position:relative; width:100%; height:100%; z-index:1; }
+  .screen{
+    position:absolute; inset:0;
+    overflow-y:auto; overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  #timeline-screen{ z-index:2; }
+  .top-title{ text-align:center; padding:34px 20px 6px 20px; }
+  .top-title h1{ font-size:1.7rem; margin:0 0 6px 0; color:var(--gold-deep); letter-spacing:1px; }
+  .top-title p{ margin:0; color:var(--sub); font-size:0.95rem; font-style:italic;}
+
+  .legend{
+    display:flex; justify-content:center; gap:18px; flex-wrap:wrap;
+    margin:16px auto 4px auto; font-size:0.78rem; font-family:Arial, sans-serif;
+    color:var(--sub);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px;}
+  .legend i{ width:12px;height:12px;border-radius:50%; display:inline-block;}
+
+  .rail-wrap{ overflow-x:auto; padding:36px 10px 10px 10px; }
+  .rail{ position:relative; min-width:1500px; height:230px; margin:0 60px; }
+  .axis{
+    position:absolute; left:0; right:0; top:110px; height:4px; border-radius:3px;
+    background:linear-gradient(90deg, var(--antigua), var(--media), var(--romana));
+    box-shadow:0 1px 3px var(--shadow);
+  }
+  .tick{ position:absolute; top:96px; width:2px; height:32px; background:rgba(110,95,71,0.35); border-radius:2px;}
+  .tick-label{
+    position:absolute; top:132px; transform:translateX(-50%);
+    font-size:0.72rem; color:var(--sub); font-family:Arial, sans-serif; white-space:nowrap;
+  }
+
+  .medal-btn{
+    position:absolute; top:78px; transform:translateX(-50%);
+    width:64px; height:64px; border-radius:50%;
+    border:none; cursor:pointer; padding:0; background:transparent;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 8px var(--shadow);
+    transition:transform .2s ease, box-shadow .2s ease;
+    z-index:3;
+  }
+  .medal-btn svg{ width:100%; height:100%; display:block; }
+  .medal-btn:hover, .medal-btn:focus-visible{
+    transform:translateX(-50%) translateY(-6px) scale(1.08);
+    box-shadow:0 8px 16px var(--shadow);
+  }
+  .name-tag{
+    position:absolute; width:130px; transform:translateX(-50%);
+    text-align:center; font-size:0.74rem; font-family:Arial, sans-serif;
+    font-weight:700; color:var(--ink); line-height:1.15; cursor:pointer;
+  }
+  .name-tag .yrs{ display:block; font-weight:400; color:var(--sub); font-size:0.68rem; margin-top:1px;}
+  .name-tag.above{ top:2px; }
+  .name-tag.below{ top:150px; }
+
+  .hint{ text-align:center; color:var(--sub); font-family:Arial, sans-serif; font-size:0.78rem; margin:6px 0 30px 0; }
+  .hint b{ color:var(--gold-deep); }
+  footer.credit{ text-align:center; color:var(--sub); font-family:Arial, sans-serif; font-size:0.72rem; padding:10px 16px 30px 16px; }
+
+  #detail-screen{
+    z-index:5;
+    clip-path:circle(0% at var(--ox,50%) var(--oy,50%));
+    transition:clip-path .65s cubic-bezier(.65,0,.35,1);
+    pointer-events:none;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,0.55), transparent 45%),
+      linear-gradient(160deg, var(--marble-1), var(--marble-2));
+  }
+  #detail-screen.open{ clip-path:circle(150% at var(--ox,50%) var(--oy,50%)); pointer-events:auto; }
+
+  .detail-topbar{ display:flex; align-items:center; justify-content:space-between; padding:20px 18px 4px 18px; }
+  .back-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid rgba(110,95,71,0.25);
+    color:var(--gold-deep); font-family:Arial, sans-serif; font-weight:700;
+    font-size:0.85rem; padding:9px 16px; border-radius:30px; cursor:pointer;
+    box-shadow:0 2px 6px var(--shadow);
+  }
+  .back-btn:hover{ background:#fff; }
+  .progress{ font-family:Arial, sans-serif; font-size:0.78rem; color:var(--sub); }
+
+  .detail-body{ max-width:640px; margin:0 auto; padding:10px 22px 60px 22px; text-align:center; }
+  .detail-medal{ width:220px; height:220px; margin:10px auto 18px auto; filter:drop-shadow(0 6px 10px var(--shadow)); }
+  .photo-medal{ position:relative; border-radius:50%; overflow:hidden; box-shadow:0 3px 8px var(--shadow); background:#ddd; }
+  .photo-medal .ring{ position:absolute; inset:0; border-radius:50%; box-shadow:inset 0 0 0 4px rgba(255,253,247,0.85), inset 0 0 16px rgba(0,0,0,0.35); pointer-events:none; }
+  .photo-medal .num{ position:absolute; right:2px; bottom:0; font-family:'Cinzel',serif; font-weight:700; color:#fffdf7; font-size:0.7em; background:rgba(43,32,19,0.55); width:22%; height:22%; min-width:16px; min-height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .era-pill{
+    display:inline-block; font-family:Arial, sans-serif; font-size:0.72rem;
+    font-weight:700; letter-spacing:0.5px; text-transform:uppercase;
+    color:#fff; padding:4px 14px; border-radius:20px; margin-bottom:10px;
+  }
+  .detail-body h2{ margin:4px 0 2px 0; font-size:1.55rem; color:var(--ink);}
+  .detail-body .years{ color:var(--sub); font-style:italic; margin-bottom:18px;}
+
+  .fade-wrap{ transition:opacity .22s ease, transform .22s ease; }
+  .fade-wrap.fading{ opacity:0; transform:translateY(8px); }
+
+  .info-block{ text-align:left; margin:0 0 16px 0;}
+  .info-block h3{ font-size:0.95rem; color:var(--gold-deep); margin:0 0 6px 0; display:flex; align-items:center; gap:8px; }
+  .info-block p{ margin:0; line-height:1.55; font-size:1.05rem;}
+  .actual-box{ background:var(--card); border-left:5px solid var(--gold); border-radius:10px; padding:14px 16px; text-align:left; box-shadow:0 2px 8px var(--shadow); }
+  .actual-box h3{ color:var(--romana); }
+
+  .nav-arrows{ display:flex; justify-content:space-between; align-items:center; max-width:640px; margin:26px auto 4px auto; padding:0 4px; }
+  .arrow-btn{ display:flex; align-items:center; gap:8px; background:transparent; border:none; cursor:pointer; font-family:Arial, sans-serif; font-weight:700; font-size:0.85rem; color:var(--gold-deep); padding:8px 6px; }
+  .arrow-btn:hover{ color:var(--romana); }
+  .arrow-btn span.circ{ width:34px;height:34px;border-radius:50%; border:2px solid currentColor; display:flex;align-items:center;justify-content:center; font-size:1rem; }
+
+  .dots{ display:flex; justify-content:center; gap:7px; margin:22px 0 6px 0; flex-wrap:wrap; }
+  .dot{ width:9px;height:9px;border-radius:50%; background:rgba(110,95,71,0.3); border:none; cursor:pointer; padding:0; }
+  .dot.on{ background:var(--gold-deep); transform:scale(1.3); }
+
+  @media (max-width: 480px){
+    .detail-medal{ width:160px; height:160px; }
+    .detail-body h2{ font-size:1.3rem; }
+    .info-block p{ font-size:0.98rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="column-deco left"></div>
+<div class="column-deco right"></div>
+
+<div id="app">
+
+  <section id="timeline-screen" class="screen">
+    <div class="top-title">
+      <h1>El Estoicismo</h1>
+      <p>Línea del tiempo interactiva · Equipo 1</p>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--antigua)"></i>Estoa Antigua</span>
+      <span><i style="background:var(--media)"></i>Estoa Media</span>
+      <span><i style="background:var(--romana)"></i>Estoa Romana / Nueva</span>
+    </div>
+    <div class="rail-wrap"><div class="rail" id="rail"></div></div>
+    <p class="hint">Toca el <b>medallón</b> o el <b>nombre</b> de un filósofo para ver su historia completa</p>
+    <footer class="credit">Actividad Fundamental #1 — Escuelas Filosóficas · UANL FIME</footer>
+  </section>
+
+  <section id="detail-screen" class="screen">
+    <div class="detail-topbar">
+      <button class="back-btn" id="backBtn">← Línea del tiempo</button>
+      <span class="progress" id="progressLabel">1 / 10</span>
+    </div>
+    <div class="detail-body">
+      <div class="fade-wrap" id="fadeWrap">
+        <div id="medalHolder" class="detail-medal"></div>
+        <span class="era-pill" id="eraPill"></span>
+        <h2 id="nameLbl"></h2>
+        <div class="years" id="yearsLbl"></div>
+        <div class="info-block">
+          <h3>¿Quién fue?</h3>
+          <p id="bioLbl"></p>
+        </div>
+        <div id="temasContainer"></div>
+        <div class="actual-box">
+          <h3>Vínculo con la actualidad</h3>
+          <p id="actualLbl"></p>
+        </div>
+      </div>
+      <div class="nav-arrows">
+        <button class="arrow-btn" id="prevBtn"><span class="circ">‹</span> Anterior</button>
+        <button class="arrow-btn" id="nextBtn">Siguiente <span class="circ">›</span></button>
+      </div>
+      <div class="dots" id="dots"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const philosophers = [
+  { id:1, name:"Zenón de Citio", years:"c. 334–262 a.C.", era:"antigua", repYear:-298, badge:"torch",
+    bio:"Filósofo griego nacido en Citio (Chipre), de familia de comerciantes de origen fenicio-griego. Tras sobrevivir a un naufragio llegó a Atenas, donde estudió con los cínicos (Crates) y los megáricos (Estilpón, Diodoro Crono) antes de fundar, hacia el 301 a.C., su propia escuela en la Stoa Poikile ("pórtico pintado"), de la que tomó su nombre el Estoicismo, una de las corrientes más influyentes de la filosofía helenística.",
+    temas:[
+      {titulo:"Lógica y teoría del conocimiento.", texto:"Zenón dividió la filosofía en lógica, física y ética, estructura que conservaría toda la escuela. Introdujo la doctrina de la katalepsis (\"comprensión\"): una representación tan clara y distinta que garantiza por sí misma su verdad; solo el asentimiento racional a este tipo de impresiones produce conocimiento seguro."},
+      {titulo:"Física y cosmología.", texto:"Concibió el universo como un ser vivo y racional gobernado por el logos (razón divina), identificado con un \"fuego artesano\" (pyr technikón) que da forma a toda la materia. De esta cosmovisión deriva su consigna de vivir conforme a la naturaleza."},
+      {titulo:"Ética.", texto:"Sostuvo que la virtud es el único bien verdadero y que todo lo demás —salud, riqueza, fama— son \"indiferentes\" (adiáphora), aunque algunos sean preferibles. Introdujo el concepto de kathekon (\"acción apropiada\"), primer paso de la ética práctica que sus sucesores desarrollarían."}
+    ],
+    actual:"Su idea de que el bienestar depende de la coherencia interna y no de bienes externos es la base de corrientes actuales de psicología positiva y bienestar emocional. Además, su distinción entre lo que depende de uno y lo que no anticipa técnicas modernas de gestión del estrés y la ansiedad." },
+
+  { id:2, name:"Cleantes de Aso", years:"c. 330–230 a.C.", era:"antigua", repYear:-280, badge:"sun",
+    bio:"De origen humilde, llegó a Atenas como boxeador y se mantuvo trabajando como aguador durante la noche mientras asistía de día a las clases de Zenón. Sucedió a su maestro como segundo escolarca de la Stoa y dirigió la escuela durante 32 años, defendiéndola con enorme disciplina personal en una época de escasos recursos económicos.",
+    temas:[
+      {titulo:"Teología y física.", texto:"Su obra más célebre, el Himno a Zeus, presenta a la divinidad como razón universal que gobierna el cosmos con providencia; con ella reforzó el carácter panteísta del Estoicismo, en el que Dios, la naturaleza y la razón son una misma realidad."},
+      {titulo:"Física del tono (tonos).", texto:"Desarrolló la idea de que todo cuerpo está atravesado por una tensión (tonos) del pneuma —aliento cósmico compuesto de fuego y aire— que le da cohesión y cualidad; esta noción se convertiría en pieza central de la física estoica posterior."},
+      {titulo:"Ética y ejemplo personal.", texto:"Más que innovar doctrinalmente, encarnó el ideal estoico de coherencia entre pensamiento y conducta; su firmeza ante la pobreza y el trabajo manual se convirtió en modelo de la autosuficiencia (autarkeia) que la escuela predicaba."}
+    ],
+    actual:"Su visión de un universo ordenado y provisto de sentido dialoga con el debate ecológico actual: la idea de que el ser humano forma parte de un sistema natural racional que debe respetar y no explotar. Su ejemplo de dignidad en el trabajo humilde resuena hoy en discusiones sobre el valor del esfuerzo frente al prestigio social." },
+
+  { id:3, name:"Crisipo de Solos", years:"c. 279–206 a.C.", era:"antigua", repYear:-242, badge:"owl",
+    bio:"Nacido en Solos (Cilicia), se dice que escribió más de 700 tratados —quinientas líneas diarias, según la tradición— convirtiéndose en el sistematizador definitivo de la doctrina estoica. Se le atribuye la frase: \"si no hubiera existido Crisipo, no existiría la Estoa\".",
+    temas:[
+      {titulo:"Lógica.", texto:"Es considerado el padre de la lógica proposicional, anterior en siglos a la lógica simbólica moderna. Sistematizó los llamados \"indemostrables\", esquemas de inferencia válida (por ejemplo: \"si P entonces Q; P; luego Q\") que ampliaban el alcance de la lógica de términos de Aristóteles."},
+      {titulo:"Física y determinismo.", texto:"Desarrolló la teoría del destino (heimarméne): todo suceso está encadenado por causas antecedentes, formando una red causal universal. Para conciliar este determinismo con la responsabilidad moral, distinguió entre causas \"principales\" y \"auxiliares\", de modo que el asentimiento humano sigue siendo obra del propio agente aunque esté causado."},
+      {titulo:"Psicología de las pasiones.", texto:"Definió las pasiones (pathe) como juicios erróneos de la razón y no como fuerzas irracionales independientes; el miedo o la ira son, para Crisipo, opiniones falsas sobre lo que es bueno o malo, por lo que pueden corregirse mediante el razonamiento correcto."}
+    ],
+    actual:"Su discusión sobre libertad y determinismo anticipa debates contemporáneos sobre el libre albedrío frente a la genética, los condicionamientos sociales y los algoritmos predictivos. Su teoría de las pasiones como juicios erróneos es, además, la semilla directa de la moderna terapia cognitivo-conductual." },
+
+  { id:4, name:"Panecio de Rodas", years:"c. 185–110 a.C.", era:"media", repYear:-147, badge:"scale",
+    bio:"Formó parte del Círculo de los Escipiones en Roma, donde convivió con la aristocracia romana y adaptó el Estoicismo a su mentalidad práctica. Fue maestro de Posidonio y el último gran escolarca de la Estoa en Atenas, marcando la transición hacia el llamado \"Estoicismo medio\".",
+    temas:[
+      {titulo:"Ética de los deberes.", texto:"En Sobre los deberes (obra perdida, conocida en detalle por el De Officiis de Cicerón) distinguió entre el deber \"perfecto\" (téleion), reservado al sabio ideal, y el deber \"medio\" (méson), accesible a cualquier persona según su papel social; con ello hizo la ética estoica mucho más practicable."},
+      {titulo:"Antropología.", texto:"Suavizó el monismo psicológico estricto de Crisipo al admitir, siguiendo a Platón, cierta tensión entre impulsos racionales e irracionales dentro del alma, lo que hacía más realista la explicación del error moral y de las debilidades humanas."},
+      {titulo:"Política y adaptación cultural.", texto:"Al introducir el Estoicismo en Roma, lo despojó de parte de su rigorismo teórico —como la doctrina del sabio perfecto— para hacerlo compatible con la vida pública romana, sentando las bases del \"estoicismo romano\" que después desarrollarían Cicerón, Séneca y Marco Aurelio."}
+    ],
+    actual:"Su ética de los deberes graduales según el rol social se conecta directamente con los códigos de ética profesional y la responsabilidad social corporativa vigentes hoy en las organizaciones, donde se exige un comportamiento adecuado al cargo antes que la perfección moral absoluta." },
+
+  { id:5, name:"Posidonio de Apamea", years:"c. 135–51 a.C.", era:"media", repYear:-93, badge:"star",
+    bio:"Nacido en Apamea (Siria), estudió con Panecio en Atenas y fundó su propia escuela en Rodas, donde tuvo entre sus discípulos a Cicerón y fue visitado por Pompeyo. Viajó por Hispania, la Galia y el norte de África realizando observaciones astronómicas y geográficas de primera mano, algo inusual entre los filósofos de su época.",
+    temas:[
+      {titulo:"Física: la simpatía universal.", texto:"Propuso la cosmología de la sympátheia: concibió el cosmos como un organismo vivo en el que todas sus partes están interconectadas y se influyen mutuamente (por ejemplo, explicó las mareas por la atracción de la luna), idea que reforzaba filosóficamente la unidad del universo estoico."},
+      {titulo:"Ciencia.", texto:"Calculó la circunferencia de la Tierra mediante observaciones astronómicas (con un resultado distinto al de Eratóstenes) y estudió sistemáticamente las mareas del océano Atlántico, siendo pionero en vincular observación empírica y teoría filosófica."},
+      {titulo:"Psicología de las pasiones.", texto:"A diferencia de Crisipo, sostuvo que el alma tiene una parte irracional independiente de la razón —retomando a Platón—, lo que explicaría mejor por qué las pasiones a veces persisten pese al buen juicio racional."},
+      {titulo:"Historia.", texto:"Escribió una Historia que continuaba la obra de Polibio, narrando los acontecimientos del Mediterráneo hasta su época; se conoce hoy solo por citas de autores posteriores."}
+    ],
+    actual:"Su enfoque interdisciplinario —filosofía, astronomía, geografía e historia unidas en un mismo proyecto— anticipa la divulgación científica actual y el necesario diálogo entre humanidades y ciencias exactas frente a la hiperespecialización del conocimiento moderno." },
+
+  { id:6, name:"Séneca", years:"c. 4 a.C.–65 d.C.", era:"romana", repYear:30, badge:"scroll",
+    bio:"Nacido en Córdoba (Hispania), se trasladó a Roma de niño para formarse en retórica y filosofía. Fue senador, dramaturgo y preceptor del joven Nerón, quien años después, acusándolo de conspiración, lo obligó a quitarse la vida.",
+    temas:[
+      {titulo:"Ética práctica.", texto:"En Cartas a Lucilio y Sobre la brevedad de la vida ofrece una ética aplicada a la vida cotidiana: cómo administrar el tiempo (el único bien realmente propio), relativizar la riqueza y prepararse racionalmente para la muerte, dirigida a personas comunes y no solo a \"sabios\" ideales."},
+      {titulo:"Psicología de las pasiones.", texto:"En De la ira analiza esta emoción como la más destructiva de todas, proponiendo estrategias prácticas de autocontrol —anticipación, pausa antes de reaccionar, cambio de perspectiva— que constituyen u  }
   h1,h2,h3,.display{font-family:'Cinzel', serif;}
 
   body::before{
